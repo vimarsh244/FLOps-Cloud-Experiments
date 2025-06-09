@@ -36,7 +36,7 @@ from torchvision.transforms import Compose, Normalize, ToTensor
 # #############################################################################
 
 # Set the desired strategy: "FedAdam" or "FedAdagrad"
-STRATEGY = "FedAdam"
+STRATEGY = "FedAdagrad"
 
 # Set data distribution: True for IID, False for non-IID
 IID_DISTRIBUTION = False
