@@ -6,18 +6,20 @@ import torchvision.models
 
 from flwr.client import ClientApp, NumPyClient
 from flwr.common import Context
-from flops_infra_drift.task import Net, get_weights, load_data, set_weights, test, train
+from task import Net, get_weights, load_data, set_weights, test, train
 from collections import OrderedDict
 
-def ShouldNodeDisconnect(partition_id, current_round):
-        if (partition_id < 2):
-            return False
-        # For node n, partition_id is n-1
-        # start_disconnect = 5, 6, 7 for partition_ids 2, 3, 4
-        start_disconnect = (partition_id + 3)
-        end_disconnect = 31
 
-        return start_disconnect <= current_round < end_disconnect
+def ShouldNodeDisconnect(partition_id, current_round):
+    if (partition_id < 2):
+        return False
+    # For node n, partition_id is n-1
+    # start_disconnect = 5, 6, 7 for partition_ids 2, 3, 4
+    start_disconnect = (partition_id + 3)
+    end_disconnect = 31
+
+    return start_disconnect <= current_round < end_disconnect
+
 
 # Define Flower Client and client_fn
 class FlowerClient(NumPyClient):
@@ -43,7 +45,7 @@ class FlowerClient(NumPyClient):
 
     def get_parameters(self, config):
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
-    
+
     def fit(self, parameters, config):
         start_time = time.time()
         # Simulating client disconnection
@@ -51,6 +53,9 @@ class FlowerClient(NumPyClient):
             print("Disconnecting partition: ", self.partition_id, " for round: ", config["current_round"])
             return "Garbage"
         self.set_parameters(parameters)
+        # Log cluster assignment if provided
+        if "cluster_id" in config:
+            print(f"[Client {self.partition_id}] Assigned cluster {config['cluster_id']}")
         train_loss = train(
             self.model,
             self.trainloader,
@@ -73,11 +78,15 @@ class FlowerClient(NumPyClient):
             print("Disconnecting partition: ", self.partition_id, " for round: ", config["current_round"])
             return "Garbage"
         self.set_parameters(parameters)
+        # Log cluster assignment if provided
+        if "cluster_id" in config:
+            print(f"[Client {self.partition_id}] Eval with cluster {config['cluster_id']}")
         loss, accuracy = test(self.model, self.valloader, self.device)
         end_time = time.time()
         runtime = end_time - start_time
         print(f"Client: {self.partition_id} took {runtime:.4f} seconds to evaluate.")
         return loss, len(self.valloader.dataset), {"accuracy": accuracy}
+
 
 
 def client_fn(context: Context):
