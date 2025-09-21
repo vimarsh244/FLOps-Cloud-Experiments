@@ -9,7 +9,7 @@ from client_app import app as client_app
 
 if __name__ == "__main__":
     # Configure simulation
-    NUM_SUPERNODES = 5  # number of simulated clients
+    NUM_SUPERNODES = 10  # number of simulated clients
 
     # Optional: specify resources per client (works with Ray backend)
     backend_config = {

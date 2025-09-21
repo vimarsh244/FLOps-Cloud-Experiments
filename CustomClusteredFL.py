@@ -112,8 +112,7 @@ class CustomClusteredFL(Strategy):
             f"{self.accept_failures}, clusters={len(self._cluster_models)})"
         )
 
-    # --- Strategy lifecycle ---
-    def num_fit_clients(self, num_available_clients: int) -> tuple[int, int]:
+    # Strategy lifecycle     def num_fit_clients(self, num_available_clients: int) -> tuple[int, int]:
         num_clients = int(num_available_clients * self.fraction_fit)
         return max(num_clients, self.min_fit_clients), self.min_available_clients
 
@@ -215,34 +214,60 @@ class CustomClusteredFL(Strategy):
             eval_instructions.append((client, EvaluateIns(params, cfg)))
         return eval_instructions
 
-    # --- Aggregation helpers ---
+    # Aggregation helpers
     @staticmethod
     def _weighted_aggregate(results: list[tuple[NDArrays, int]], inplace: bool) -> NDArrays:
         if not results:
             raise ValueError("No results to aggregate")
+        # Determine dtype behavior per-parameter
+        first_weights = results[0][0]
+        is_float = [np.issubdtype(np.asarray(w).dtype, np.floating) for w in first_weights]
         if inplace:
-            # In-place aggregation assumes we can start from first weights
-            base = [arr.copy() for arr in results[0][0]]
+            base = [
+                (np.asarray(w, dtype=np.float32).copy() if is_float[i] else np.asarray(w).copy())
+                for i, w in enumerate(first_weights)
+            ]
             total = results[0][1]
             for arrs, n in results[1:]:
+                denom = total + n
+                alpha = np.float32(n / denom) if denom > 0 else np.float32(0.0)
                 for i, arr in enumerate(arrs):
-                    base[i] += (n / (total + n)) * (arr - base[i])
+                    if is_float[i]:
+                        arr_f = np.asarray(arr, dtype=np.float32)
+                        base[i] += alpha * (arr_f - base[i])
+                    else:
+                        # Keep the original non-float parameter (no averaging)
+                        pass
                 total += n
             return base
         # Copy-based weighted average
         total_examples = sum(n for _, n in results)
-        agg = [np.zeros_like(w) for w in results[0][0]]
+        if total_examples == 0:
+            return [np.asarray(w, dtype=np.float32) if is_float[i] else np.asarray(w).copy() for i, w in enumerate(first_weights)]
+        agg: NDArrays = []
+        # Initialize accumulators
+        for i, w in enumerate(first_weights):
+            if is_float[i]:
+                agg.append(np.zeros_like(np.asarray(w), dtype=np.float32))
+            else:
+                agg.append(np.asarray(w).copy())  # placeholder; will keep first
+        # Accumulate
         for weights, n in results:
+            w_factor = np.float32(n / total_examples)
             for i, w in enumerate(weights):
-                agg[i] += (n / total_examples) * w
+                if is_float[i]:
+                    agg[i] += w_factor * np.asarray(w, dtype=np.float32)
+                else:
+                    # Leave as the first occurrence
+                    pass
         return agg
 
     @staticmethod
     def _flatten_params_difference(new: NDArrays, old: NDArrays) -> np.ndarray:
-        vecs = [(n - o).ravel() for n, o in zip(new, old)]
+        vecs = [(np.asarray(n, dtype=np.float32) - np.asarray(o, dtype=np.float32)).ravel() for n, o in zip(new, old)]
         if not vecs:
             return np.array([], dtype=np.float32)
-        return np.concatenate([v.astype(np.float32, copy=False) for v in vecs])
+        return np.concatenate([v for v in vecs])
 
     def _binary_spherical_kmeans(self, X: np.ndarray) -> np.ndarray:
         """Very small k=2 spherical k-means for splitting. Returns labels in {0,1}."""
@@ -281,7 +306,7 @@ class CustomClusteredFL(Strategy):
                 c1 = c1 / c1_norm
         return labels
 
-    # --- Aggregate & split ---
+    # Aggregate & split
     def aggregate_fit(
         self,
         server_round: int,
@@ -383,13 +408,13 @@ class CustomClusteredFL(Strategy):
             accum = None
             for c, items in grouped.items():
                 n_c = sum(n for *_, n in items)
-                w = n_c / total_examples
+                w = np.float32(n_c / total_examples)
                 model = self._cluster_models[c]
                 if accum is None:
-                    accum = [w * ww for ww in model]
+                    accum = [np.asarray(ww, dtype=np.float32) * w for ww in model]
                 else:
                     for i in range(len(accum)):
-                        accum[i] += w * model[i]
+                        accum[i] += w * np.asarray(model[i], dtype=np.float32)
             global_params = ndarrays_to_parameters(accum if accum is not None else next(iter(self._cluster_models.values())))
 
         # Aggregate custom metrics if a function provided

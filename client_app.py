@@ -95,7 +95,14 @@ def client_fn(context: Context):
     partition_id = context.node_config["partition-id"]
     num_partitions = context.node_config["num-partitions"]
     trainloader, valloader = load_data(partition_id, num_partitions)
-    local_epochs = context.run_config["local-epochs"]
+    # Some simulation setups provide 'local-epochs' while others may omit it.
+    # Use a safe lookup with fallback to 'local_epochs' and default to 1 to
+    # avoid KeyError when the key is missing.
+    local_epochs_raw = context.run_config.get("local-epochs", context.run_config.get("local_epochs", 1))
+    try:
+        local_epochs = int(local_epochs_raw)
+    except Exception:
+        local_epochs = 1
 
     # Return Client instance
     return FlowerClient(net, trainloader, valloader, local_epochs, partition_id).to_client()
