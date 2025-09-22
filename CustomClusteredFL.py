@@ -112,7 +112,8 @@ class CustomClusteredFL(Strategy):
             f"{self.accept_failures}, clusters={len(self._cluster_models)})"
         )
 
-    # Strategy lifecycle     def num_fit_clients(self, num_available_clients: int) -> tuple[int, int]:
+    # Strategy lifecycle     
+    def num_fit_clients(self, num_available_clients: int) -> tuple[int, int]:
         num_clients = int(num_available_clients * self.fraction_fit)
         return max(num_clients, self.min_fit_clients), self.min_available_clients
 

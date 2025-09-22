@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import IidPartitioner
+from flwr_datasets.partitioner import IidPartitioner, DirichletPartitioner
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Normalize, ToTensor
 
@@ -39,15 +39,26 @@ def load_data(partition_id: int, num_partitions: int):
     """Load partition CIFAR10 data."""
     # Only initialize `FederatedDataset` once
     global fds
+    # if fds is None:
+    #     partitioner = IidPartitioner(num_partitions=num_partitions)
+    #     fds = FederatedDataset(
+    #         dataset="uoft-cs/cifar10",
+    #         partitioners={"train": partitioner},
+    #     )
+    
+    # non iid
+        # partitioner = NonIidPartitioner(num_partitions=num_partitions, noniid_alpha=0.5)
+    
+    # we use dirichlet partitioner for non iid
     if fds is None:
-        partitioner = IidPartitioner(num_partitions=num_partitions)
+        partitioner = DirichletPartitioner(
+            num_partitions=num_partitions, partition_by="label", alpha=0.5, seed=42
+        )
         fds = FederatedDataset(
             dataset="uoft-cs/cifar10",
             partitioners={"train": partitioner},
         )
     
-    # non iid
-        # partitioner = NonIidPartitioner(num_partitions=num_partitions, noniid_alpha=0.5)
     partition = fds.load_partition(partition_id)
     # Divide data on each node: 80% train, 20% test
     partition_train_test = partition.train_test_split(test_size=0.2, seed=42)

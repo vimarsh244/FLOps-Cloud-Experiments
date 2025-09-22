@@ -22,15 +22,15 @@ def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
 def server_fn(context: Context):
     # Read from config with defaults
-    num_rounds = context.run_config.get("num-server-rounds", 3)
+    num_rounds = context.run_config.get("num-server-rounds", 10)
     fraction_fit = context.run_config.get("fraction-fit", 1.0)
 
     # Define strategy (Clustered FL)
     strategy = CustomClusteredFL(
         fraction_fit=fraction_fit,
         fraction_evaluate=1.0,
-        min_fit_clients=2,
-        min_available_clients=2,
+        min_fit_clients=5,
+        min_available_clients=5,
         evaluate_metrics_aggregation_fn=weighted_average,
     )
 
