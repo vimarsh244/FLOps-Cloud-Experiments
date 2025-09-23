@@ -3,29 +3,32 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 log_text = """
-
-INFO :      aggregate_evaluate: received 0 results and 10 failures
+INFO :      aggregate_evaluate: received 4 results and 6 failures
 INFO :      
 INFO :      [SUMMARY]
-INFO :      Run finished 10 round(s) in 992.91s
+INFO :      Run finished 10 round(s) in 774.64s
 INFO :          History (loss, distributed):
-INFO :                  round 1: 2.951601439142499
-INFO :                  round 2: 2.260929415559258
-INFO :                  round 3: 2.1438362406289517
-INFO :                  round 4: 2.036771946844901
-INFO :                  round 5: 1.9537265063968063
-INFO :                  round 6: 2.7703895395966622
-INFO :                  round 7: 3.314770360325658
-INFO :                  round 8: 3.314770360325658
+INFO :                  round 1: 2.2990007627755404
+INFO :                  round 2: 2.170045356079936
+INFO :                  round 3: 1.955089545622468
+INFO :                  round 4: 1.8268937911838292
+INFO :                  round 5: 1.7103732207583056
+INFO :                  round 6: 1.6111383521929383
+INFO :                  round 7: 1.5277221463620663
+INFO :                  round 8: 1.4869465008378029
+INFO :                  round 9: 1.440417517721653
+INFO :                  round 10: 1.4087007911875844
 INFO :          History (metrics, distributed, evaluate):
-INFO :          {'accuracy': [(1, 0.12889879057924888),
-INFO :                        (2, 0.16836409929980903),
-INFO :                        (3, 0.1817313812858052),
-INFO :                        (4, 0.23604922554636112),
-INFO :                        (5, 0.2867017774851876),
-INFO :                        (6, 0.08817498291182502),
-INFO :                        (7, 0.22213967310549776),
-INFO :                        (8, 0.22213967310549776)]}
+INFO :          {'accuracy': [(1, 0.1474),
+INFO :                        (2, 0.1996),
+INFO :                        (3, 0.2489),
+INFO :                        (4, 0.301),
+INFO :                        (5, 0.356),
+INFO :                        (6, 0.404125),
+INFO :                        (7, 0.4238571428571429),
+INFO :                        (8, 0.442),
+INFO :                        (9, 0.4688),
+INFO :                        (10, 0.486)]}
 INFO :      
 """
 

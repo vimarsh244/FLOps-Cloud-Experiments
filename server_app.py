@@ -1,8 +1,7 @@
 """flops-infra-drift: A Flower / PyTorch app."""
 
 
-from CustomClusteredFL import CustomClusteredFL
-# from CustomFedProx import CustomFedProx  # optional
+from CustomMIFA import CustomMIFA
 from flwr.common import Context
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 # from flwr.server.strategy import FedAvg, FedProx
@@ -25,13 +24,14 @@ def server_fn(context: Context):
     num_rounds = context.run_config.get("num-server-rounds", 50)
     fraction_fit = context.run_config.get("fraction-fit", 1.0)
 
-    # Define strategy (Clustered FL)
-    strategy = CustomClusteredFL(
+    strategy = CustomMIFA(
         fraction_fit=fraction_fit,
         fraction_evaluate=1.0,
         min_fit_clients=5,
         min_available_clients=5,
         evaluate_metrics_aggregation_fn=weighted_average,
+        base_server_lr=context.run_config.get("server-base-lr", 0.1),
+        wait_for_all_clients_init=context.run_config.get("mifa-wait-for-all", True),
     )
 
     config = ServerConfig(num_rounds=num_rounds)
