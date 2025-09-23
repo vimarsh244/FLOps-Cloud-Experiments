@@ -22,7 +22,7 @@ def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
 def server_fn(context: Context):
     # Read from config with defaults
-    num_rounds = context.run_config.get("num-server-rounds", 10)
+    num_rounds = context.run_config.get("num-server-rounds", 50)
     fraction_fit = context.run_config.get("fraction-fit", 1.0)
 
     # Define strategy (Clustered FL)
